@@ -24,6 +24,7 @@ model User {
   updatedAt DateTime @updatedAt()
 }
 
+// don't forget to add profile model => fullname, address, phonenumber and image
 
 model Event {
   id String @id @default(uuid())
