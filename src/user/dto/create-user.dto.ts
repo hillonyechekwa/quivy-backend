@@ -14,6 +14,11 @@ export class CreateUserDto {
     @IsStrongPassword()
     @IsString()
     @MinLength(8)
-    @ApiProperty()
-    password: string
+    @ApiProperty({nullable: true})
+    password?: string
+
+
+    @IsString()
+    @ApiProperty({nullable: true})
+    authProvider?: string
 }

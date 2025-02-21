@@ -1,6 +1,7 @@
-import { NestFactory, /*HttpAdapterHost, Reflector*/ } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
-import {ValidationPipe, /*ClassSerializerInterceptor*/} from "@nestjs/common"
+import { PrismaClientExceptionFilter } from './prisma-client-exception/prisma-client-exception.filter';
+import {ClassSerializerInterceptor, ValidationPipe, /*ClassSerializerInterceptor*/} from "@nestjs/common"
 import {SwaggerModule, DocumentBuilder} from "@nestjs/swagger"
 
 
@@ -11,6 +12,8 @@ async function bootstrap() {
     whitelist: true,
     forbidNonWhitelisted: true
   }));
+
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   const config = new DocumentBuilder()
       .setTitle('quivy')
@@ -31,6 +34,8 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('api', app, document)
+  const {httpAdapter} = app.get(HttpAdapterHost)
+  app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter))
   await app.listen(8000, () => {console.log(`listening on port 8000`)});
 }
 bootstrap();

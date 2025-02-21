@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+// import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from "@prisma/client"
 import * as bcrypt from 'bcrypt'
@@ -9,7 +9,13 @@ import * as bcrypt from 'bcrypt'
 export class UserService {
   constructor(private prisma: PrismaService) { }
 
+  async validatePassword(password: string) {
+        const salt = await bcrypt.genSalt()
+        const hashedPassword = await bcrypt.hash(password, salt)
+        password = hashedPassword
 
+        return password
+  }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const userExists = await this.findByEmail(createUserDto.email)
@@ -17,18 +23,25 @@ export class UserService {
     if (userExists !== null) throw new ConflictException("User Already Exists")
     
     
+
     try {
-      const salt = await bcrypt.genSalt()
-      const hashedPassword = await bcrypt.hash(createUserDto.password, salt)
-      createUserDto.password = hashedPassword
+      if (!createUserDto.authProvider) {
+       
+        const userPassword = await this.validatePassword(createUserDto.password)
 
-      const user = await this.prisma.user.create({
-        data: createUserDto
-      })
 
-      delete user.password
+        const user = await this.prisma.user.create({
+          data: {
+            ...createUserDto,
+            password: userPassword
+          }
+        })
 
-      return user
+        delete user.password
+
+        return user
+      }
+      
     } catch (error) {
       console.error(error)
       throw new BadRequestException("user could not be crerated")
@@ -95,11 +108,23 @@ export class UserService {
     })
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+
+  async updateEmailVerifiedAt(userId: string, date: Date) {
+    return await this.prisma.user.update({
+      where: {
+        id: userId
+      },
+      data: {
+        emailVerifiedAt: date
+      }
+    })
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
+  // update(id: number, updateUserDto: UpdateUserDto) {
+  //   return `This action updates a #${id} user`;
+  // }
+
+  // remove(id: number) {
+  //   return `This action removes a #${id} user`;
+  // }
 }
