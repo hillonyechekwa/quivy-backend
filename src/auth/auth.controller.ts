@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode, UseGuards, Req, Res, BadRequestException, UnauthorizedException, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode, UseGuards, Req, Res, BadRequestException, UnauthorizedException, Query, Put } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -7,11 +7,16 @@ import { LoginDto } from './dto/login.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/decorators/public.decorator';
 import { LocalGuard } from 'src/guards/local.guard';
+import {NoAccountGuard} from "src/decorators/no-account-guard.decorator";
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
 import { RefreshJwtGuard } from 'src/guards/refresh.guard';
 // import { UpdateAuthDto } from './dto/update-auth.dto';
 import { SupabaseAuthAdapter } from 'src/supabase/supabase-auth-adapter.service';
 import { SupabaseConnectorService } from 'src/supabase/supabase-connector.service';
+import { CurrentUser } from 'src/decorators/current-user.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPassswordDto } from './dto/reset-password.dto';
 
 
 
@@ -24,14 +29,16 @@ export class AuthController {
     private readonly authService: AuthService,
     private supabaseConnector: SupabaseConnectorService,
     private supabaseAdapter: SupabaseAuthAdapter
-  ) {}
-
+  ) { }
+  
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Post("signup")
   async signUp(@Body() createUserDto: CreateUserDto) {
     return await this.authService.signUp(createUserDto);
   }
-
+  
+  @Public()
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalGuard)
   @Post("login")
@@ -39,13 +46,13 @@ export class AuthController {
     return await this.authService.login(loginDto);
   }
 
-
+  @Public()
   @UseGuards(RefreshJwtGuard)
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
-  refreshToken(@Req() req) {
+  refreshToken(@CurrentUser() user) {
     try {
-      const userId = req.user.userId
+      const userId = user.userId
       return this.authService.refreshToken(userId);
 
     } catch (error) {
@@ -56,26 +63,29 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('signout')
-  signOut(@Req() req) {
-    console.log('Full request object:', JSON.stringify({
-      headers: req.headers,
-      user: req.user,
-  }, null, 2));
+  signOut(@Req() req, @CurrentUser() user) {
+    //   console.log('Full request object:', JSON.stringify({
+    //     headers: req.headers,
+    //     user: req.user,
+    // }, null, 2));
   
-  if (!req.user) {
-    console.error('User object is missing from request!');
-    // Return a more helpful error instead of crashing
-    throw new UnauthorizedException('Authentication failed: User not found in request');
+    // if (!req.user) {
+    //   console.error('User object is missing from request!');
+    //   // Return a more helpful error instead of crashing
+    //   throw new UnauthorizedException('Authentication failed: User not found in request');
+    // }
+  
+    const userId = user.userId;
+    console.log('Using userId:', userId);
+    return this.authService.signOut(userId);
   }
   
-  const userId = req.user.userId;
-  console.log('Using userId:', userId);
-  return this.authService.signOut(userId);
-  }
-
-  @Post('otp-verfication')
-  async generateEmailVerification(@Req() req) {
-    const userId = req.user.userId
+  //@UseGuards(JwtAuthGuard)
+  @NoAccountGuard()
+  @Post('otp-verification')
+  async generateEmailVerification(@CurrentUser() user){
+    console.log('user', user)
+    const userId = user.userId
     await this.authService.generateEmailVerification(userId)
 
     return {
@@ -84,16 +94,33 @@ export class AuthController {
     }
   }
 
-
+  //@UseGuards(JwtAuthGuard)
+  @NoAccountGuard()
   @Post("verify/:otp")
-  async verifyEmail(@Param('otp') otp: string, @Req() req) {
-    const userId = await req.user.userId
+  async verifyEmail(@Param('otp') otp: string, @CurrentUser() user){
+    const userId = await user.userId
     const result = await this.authService.verifyEmail(userId, otp)
 
     return {
       status: result ? 'success' : 'failure',
       message: null
     }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put("change-password")
+  async changePassword(@CurrentUser() user, @Body() changePassword: ChangePasswordDto) {
+    return this.authService.changeCurrentUserPassword(changePassword, user.userId)
+  }
+
+  @Post("forgot-password")
+  async forgotPassword(@Body() forgotPassword: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPassword)
+  }
+
+  @Post("reset-password")
+  async resetPassword(@Body() reset: ResetPassswordDto) {
+    return this.authService.resetPassword(reset)
   }
 
 

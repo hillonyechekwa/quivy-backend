@@ -3,6 +3,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import {APP_GUARD} from "@nestjs/core";
+import {JwtAuthGuard} from "./guards/jwt.guard";
+import {AccountGuard} from "./guards/account.guard";
 import { PrismaModule } from './prisma/prisma.module';
 import { EventsModule } from './events/events.module';
 import { MailerModule } from './mailer/mailer.module';
@@ -23,6 +26,16 @@ import configuration from './config/configuration'
     VerificationModule,
     ParticipantsModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AccountGuard  
+    }
+  ],
 })
 export class AppModule {}

@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { PayloadType } from 'src/types/payload.type';
 import { UserService } from 'src/user/user.service';
@@ -13,6 +13,10 @@ import * as bcrypt from "bcrypt"
 import * as argon2 from "argon2"
 import refreshConfig from 'src/config/refresh.config'
 import jwtConfig from 'src/config/jwt.config';
+import { nanoid } from 'nanoid';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPassswordDto } from './dto/reset-password.dto';
 
 
 
@@ -210,11 +214,94 @@ export class AuthService {
     }
     const newDate = new Date()
     await this.userService.updateEmailVerifiedAt(user.id, newDate)
-
+    await this.userService.updateUserAccountStatus(user.id)
     return (true)
   }
 
-  async sendPasswordResetEmail(){}
-  async sendPasswordChangedEmail(){}
+  async changeCurrentUserPassword(passwords: ChangePasswordDto, userId: string) {
+      const user = await this.userService.findById(userId)
+
+    if (!user) {
+        throw new UnauthorizedException("User not found!!")
+    }
+    
+    const passwordMatch = await await bcrypt.compare(passwords.oldPassword, user.password)
+
+    if (!passwordMatch) {
+      throw new UnauthorizedException("Passwords don't match")
+    }
+    const salt = await bcrypt.genSalt()
+    const newHashedPassword = await bcrypt.hash(passwords.newPassword, salt)
+
+    await this.userService.updateUserPassword(newHashedPassword, user.id)
+
+    return user
+  }
+
+  async forgotPassword(forgotPassword: ForgotPasswordDto) {
+    const user = await this.userService.findByEmail(forgotPassword.email)
+
+    if (user) {
+      const token = nanoid(64)
+      await this.prisma.resetToken.create({
+        data: {
+          token,
+          userId: user.id,
+          expirationDate: new Date(Date.now() + 60 * 60 * 1000)
+        }
+      })
+
+       await this.EmailService.sendMail({
+        subject: `Quivy - Password Reset`,
+        sender: `Quivy <onboarding@resend.dev>`,
+        recipients: [user.email],
+         html: `<p>Hi${user.email.split('@')[0]},</p>
+                <p>
+                You can click this link to change your password or ignore it if you didn't initiate a password reset <br /><span style="font-size:24px; font-weight: 700;">https://quivy.io/reset-password?token=${token}</span>
+                </p><p>Regards,<br />Quivy</p>`
+      })
+    }
+
+    return {
+      message: "Check you email for the reset password link"
+    }
+
+  }
+
+
+  async resetPassword(resetDto: ResetPassswordDto) {
+    const token = await this.prisma.resetToken.findUnique({
+      where: {
+        token: resetDto.token,
+        expirationDate: {
+          gt: new Date()
+        }
+      }
+    })
+
+    if (!token) {
+      throw new UnauthorizedException('Invalid link')
+    }
+    const user = await this.userService.findById(token.userId)
+    if (!user) {
+      throw new InternalServerErrorException()
+    }
+
+    const salt = await bcrypt.genSalt()
+    const newHashedPassword = await bcrypt.hash(resetDto.newPassword, salt)
+
+    await this.userService.updateUserPassword(newHashedPassword, token.userId)
+
+     await this.prisma.resetToken.delete({
+      where: {
+       token: resetDto.token,
+        expirationDate: {
+          gt: new Date()
+        }
+      }
+    })
+
+    return user
+  }
 
 }

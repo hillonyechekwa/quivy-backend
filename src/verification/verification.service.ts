@@ -37,6 +37,21 @@ export class VerificationService {
 
     const hashedToken = await argon2.hash(otp)
 
+    //remove any previous otps with the same userId
+    const hasVerification = await this.prisma.verification.findUnique({
+      where: {
+        userId
+      }
+    })
+
+    if (hasVerification) {
+      await this.prisma.verification.delete({
+        where: {
+          userId
+        }
+      })
+    }
+
     await this.prisma.verification.create({
       data: {
         userId,
@@ -58,7 +73,9 @@ export class VerificationService {
       }
     })
 
-    if (validToken && await argon2.verify(token, validToken.token)) {
+    console.log('otp-token', validToken.token)
+
+    if (validToken && await argon2.verify(validToken.token, token)) {
       await this.prisma.verification.delete({
         where: {
           id: validToken.id
@@ -70,5 +87,7 @@ export class VerificationService {
     }
   }
 
-  async cleanupExpiredTokens () {}
+  async cleanupExpiredTokens() {}
+  
+  
 }

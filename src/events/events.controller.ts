@@ -2,33 +2,46 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { CurrentUser } from 'src/decorators/current-user.decorator';
+import { QrCodeService } from './qrcode.service';
 
 @Controller('events')
 export class EventsController {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(
+    private readonly eventsService: EventsService,
+    private qrCodeService: QrCodeService
+  ) { }
 
-  @Post()
-  create(@Body() createEventDto: CreateEventDto) {
-    return this.eventsService.create(createEventDto);
+  @Get("events")
+  async getEvents(@CurrentUser() user) {
+    const userId = await user.userId
+    return this.eventsService.findAllEventsByUser(userId)
   }
 
-  @Get()
-  findAll() {
-    return this.eventsService.findAll();
+  @Get("event/:eventId")
+  async getEvent(@CurrentUser() user, @Param('eventId') eventId: string) {
+    return this.eventsService.findOneEvent(eventId)
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.eventsService.findOne(+id);
+  @Post('create-event')
+  async createEvent(@CurrentUser() user, @Body() createEvent: CreateEventDto) {
+    const userId = await user.userId
+    return await this.eventsService.newEvent(createEvent, userId)
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto) {
-    return this.eventsService.update(+id, updateEventDto);
+  @Post(":id/generate-qr")
+  async generateQrCode(@Param("id") id: string) {
+    return await this.qrCodeService.generateQrCode(id)
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.eventsService.remove(+id);
+
+  @Get(":id/status")
+  async getEventStatus(@Param("id") id: string) {
+    return this.eventsService.getEventStatus(id)
+  }
+
+  @Get(":id/active-qr")
+  async getActiveQr(@Param("id") id: string) {
+    return this.eventsService.getActiveQrCode(id)
   }
 }

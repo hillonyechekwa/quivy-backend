@@ -18,7 +18,6 @@ export class CreateUserDto {
     password?: string
 
 
-    @IsString()
     @ApiProperty({nullable: true})
     authProvider?: string
 }
