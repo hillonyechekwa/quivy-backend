@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import * as QRCode from 'qrcode'
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { nanoid } from "nanoid";
@@ -150,7 +150,6 @@ export class QrCodeService {
         })
 
         if (expiredCodes.length > 0) {
-            Logger.log(`Expiring ${expiredCodes.length} QR Codes`)
             await this.prisma.qrCode.updateMany({
                 where: {
                     id: {
