@@ -91,12 +91,13 @@ export class AuthController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+
   @Put("change-password")
   async changePassword(@CurrentUser() user, @Body() changePassword: ChangePasswordDto) {
     return this.authService.changeCurrentUserPassword(changePassword, user.userId)
   }
 
+  @Public()
   @Post("forgot-password")
   async forgotPassword(@Body() forgotPassword: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPassword)
