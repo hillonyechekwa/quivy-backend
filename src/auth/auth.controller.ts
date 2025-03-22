@@ -68,7 +68,6 @@ export class AuthController {
   @NoAccountGuard()
   @Post('otp-verification')
   async generateEmailVerification(@CurrentUser() user){
-    console.log('user', user)
     const userId = user.userId
     await this.authService.generateEmailVerification(userId)
 

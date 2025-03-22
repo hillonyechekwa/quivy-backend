@@ -33,7 +33,7 @@ export class AuthService {
     private verificationService: VerificationService,
     private EmailService: MailerService
   ) {
-    console.log('Service secret:', this.jwtConfiguration.secret);
+    //console.log('Service secret:', this.jwtConfiguration.secret);
   }
 
 
@@ -147,9 +147,6 @@ export class AuthService {
 
   async generateTokens(userId: string, email: string) {
     const payload: PayloadType = { userId, email }
-    console.log('PowerShell JWT_SECRET:', process.env.JWT_SECRET);
-    console.log(jwtConfig().secret)
-    console.log('Signing with secret:', this.jwtConfiguration.secret);
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, this.refreshTokenConfig)

@@ -73,8 +73,6 @@ export class VerificationService {
       }
     })
 
-    console.log('otp-token', validToken.token)
-
     if (validToken && await argon2.verify(validToken.token, token)) {
       await this.prisma.verification.delete({
         where: {

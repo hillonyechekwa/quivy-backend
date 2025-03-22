@@ -126,7 +126,7 @@ export class UserService {
   }
 
   async updateHashedRefreshToken(userId: string, hashedToken: string) {
-    return await this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: {
         id: userId
       },
@@ -134,6 +134,7 @@ export class UserService {
         hashedRefreshToken: hashedToken
       }
     })
+    return user
   }
 
 

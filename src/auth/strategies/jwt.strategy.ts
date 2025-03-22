@@ -14,7 +14,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         private readonly config: ConfigService
     ) {
 
-        console.log('Strategy secret:', jwtConfiguration.secret);
         
         if (!jwtConfiguration.secret) {
             throw new Error('JWT secret is not defined');
@@ -25,16 +24,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             ignoreExpiration: false, // Changed to false for proper expiration checking
             secretOrKey: config.get<string>('JWT_SECRET')
         });
-
-        console.log('JWT Strategy Initialized');
-        console.log('JWT Secret length:', jwtConfiguration.secret.length);
     }
 
     async validate(payload: PayloadType) {
-        console.log("Validating JWT payload:", payload);
         
         if (!payload || !payload.email || !payload.userId) {
-            console.log("Invalid payload structure:", payload);
             throw new UnauthorizedException("Invalid token payload");
         }
 
@@ -43,7 +37,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             email: payload.email,
             userId: payload.userId
         };
-        console.log("Validated user:", user);
         return user;
     }
 }
