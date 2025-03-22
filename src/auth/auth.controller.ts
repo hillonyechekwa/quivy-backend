@@ -2,8 +2,6 @@ import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode, UseGuards, Re
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
-// import { AuthEntity } from './entities/auth.entity';
-// import { UserEntity } from 'src/user/entities/user.entity';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/decorators/public.decorator';
 import { LocalGuard } from 'src/guards/local.guard';
@@ -56,27 +54,13 @@ export class AuthController {
       return this.authService.refreshToken(userId);
 
     } catch (error) {
-      console.error(error.message)
       throw new BadRequestException("Couldn't get token!")
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('signout')
   signOut(@Req() req, @CurrentUser() user) {
-    //   console.log('Full request object:', JSON.stringify({
-    //     headers: req.headers,
-    //     user: req.user,
-    // }, null, 2));
-  
-    // if (!req.user) {
-    //   console.error('User object is missing from request!');
-    //   // Return a more helpful error instead of crashing
-    //   throw new UnauthorizedException('Authentication failed: User not found in request');
-    // }
-  
     const userId = user.userId;
-    console.log('Using userId:', userId);
     return this.authService.signOut(userId);
   }
   
