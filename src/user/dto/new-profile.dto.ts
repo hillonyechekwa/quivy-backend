@@ -1,4 +1,5 @@
-import {IsPhoneNumber, IsString} from 'class-validator'
+import { IsPhoneNumber, IsString } from 'class-validator'
+import { Express } from 'express'
 import { ApiProperty } from '@nestjs/swagger'
 
 
@@ -14,4 +15,7 @@ export class NewProfileDto{
     @IsString()
     @ApiProperty()
     address: string
+
+    @ApiProperty()
+    profileImage: Express.Multer.File
 }

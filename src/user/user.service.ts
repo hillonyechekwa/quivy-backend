@@ -2,29 +2,22 @@ import { BadRequestException, ConflictException, Injectable, UnauthorizedExcepti
 import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User, AccountStatus } from "@prisma/client"
+import { User, AccountStatus, Profile } from "@prisma/client"
 import * as bcrypt from 'bcrypt'
 import { NewProfileDto } from './dto/new-profile.dto';
-
-import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
-import { nanoid } from 'nanoid';
+import { updateProfileDto } from './dto/update-profile.dto';
+import { FileUpload } from './fileUpload.service';
 
 
 @Injectable()
 export class UserService {
 
-  private supabase: SupabaseClient
-
   constructor(
     private prisma: PrismaService,
-    private config: ConfigService
-  ) {
-    this.supabase = createClient(
-      this.config.get<string>('SUPABASE_URL'),
-      this.config.get<string>('SUPABASE_PUBLIC_KEY')
-    )
-   }
+    private config: ConfigService,
+    private fileUpload: FileUpload
+  ) {}
   
   async updateUserAccountStatus(userId: string) {
     return await this.prisma.user.update({
@@ -160,79 +153,49 @@ export class UserService {
     })
   }
 
-  async createUserProfile(profileData: NewProfileDto, userId: string) {
+  async createUserProfile(profileData: NewProfileDto, userId: string): Promise<Profile> {
+    let uploadedImgDetails
+
+    if (profileData.profileImage) {
+      uploadedImgDetails = this.fileUpload.uploadFile(profileData.profileImage, "avatars")
+    }
+
     const profile = await this.prisma.profile.create({
       data: {
         ...profileData,
+        profileImageUrl: uploadedImgDetails?.url,
         user: {
           connect: { id: userId }
         }
       }
     })
+
+
+    return profile
   }
 
-  async checkSupabaseBucket(bucketName: string, isPublic: boolean = true) {
-      const {data: buckets, error: listError} = await this.supabase.storage.listBuckets()
 
-    if (listError) {
-      throw new Error("failed to list buckets")
+  async updateUserProfile(profileData: updateProfileDto, userId: string) {
+    let uploadedImgDetails
+    
+    if (profileData.profileImage) {
+      uploadedImgDetails = this.fileUpload.uploadFile(profileData.profileImage, "avatars")
     }
 
-    const bucketExists = buckets.some(bucket => bucket.name === bucketName)
-
-    if (!bucketExists) {
-      const { error: createError } = await this.supabase.storage.createBucket(bucketName, {
-        public: isPublic
-      })
-
-      if (createError) {
-        throw new Error("failed to create bucket")
-      }
-    }
-  }
-
-  async uploadProfileImg(file: Express.Multer.File, bucket:string, userId: string) {
-    if (!file) {
-      throw new BadRequestException('No file provided')
-    }
-
-    const fileExt = file.originalname.split('.').pop()
-    const fileName = `${nanoid()}.${fileExt}`
-    const filePath = `${Date.now()}_${fileName}`
-
-
-    const { data, error } = await this.supabase
-      .storage
-      .from(bucket)
-      .upload(filePath, file.buffer, {
-        contentType: file.mimetype,
-        cacheControl: '3600'
-                                      })
-
-
-    if (error) {
-      throw new BadRequestException(error.message)      
-    }
-
-    const {data: { publicUrl } } = await this.supabase.storage.from(bucket).getPublicUrl(filePath)
-
-    await this.prisma.profile.update({
+    const updatedProfile = await this.prisma.profile.update({
       where: {
-        userId
+        id: userId
       },
       data: {
-        profileImageUrl: publicUrl
+        ...profileData,
+        profileImageUrl: uploadedImgDetails?.url
       }
     })
 
 
-    return {
-      path: filePath,
-      url: publicUrl,
-      size: file.size,
-      mimeType: file.mimetype
-    }
+    return updatedProfile
   }
+
 
   async getUserProfile(userId: string) {
     return await this.prisma.profile.findUnique({

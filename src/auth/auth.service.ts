@@ -139,6 +139,7 @@ export class AuthService {
     const { accessToken, refreshToken } = await this.generateTokens(userId, user.email)
     const hashedRefreshToken = await argon2.hash(refreshToken)
     await this.userService.updateHashedRefreshToken(userId, hashedRefreshToken)
+    console.log("Token Refreshed", {accessToken, refreshToken})
     return {
       accessToken,
       refreshToken
@@ -161,8 +162,7 @@ export class AuthService {
     //   expiresIn: '7d',
     // });
 
-    console.log('Access token generated (first 10 chars):', accessToken.substring(0, 10) + '...');
-
+    // console.log('Access token generated (first 10 chars):', accessToken.substring(0, 10) + '...');
     return {
       accessToken,
       refreshToken

@@ -27,15 +27,15 @@ export class QrCodeService {
         if (!event) {
             throw new Event("Event not found")
         }
-
+ // rewrite this to check if the event is active through the event status?
         //checks if event is active
         const now = new Date()
-        if(now < event.eventStartDate || now > event.eventEndDate) {
+        if(now < event.eventStartTime || now > event.eventEndTime ) {
             throw new Error('Cannont generate QR code - event is not active')
         }
 
         const expiresAt = new Date()
-        expiresAt.setMinutes(expiresAt.getMinutes() + event.QrCodeValidityDuration)
+        expiresAt.setMinutes(expiresAt.getMinutes() + event.qrCodeValidityDuration)
 
 
         const uniqueCode = nanoid()
@@ -82,6 +82,56 @@ export class QrCodeService {
     }
 
 
+    async processScannedQrCode(qrCodeUniqueCode: string, eventId: string) {
+        const now = new Date()
+
+        //check if the event is active
+        const eventStatus = await this.prisma.event.findUnique({
+            where: {
+                id: eventId
+            },
+            select: {
+                status: true
+            }
+        })
+
+        if (eventStatus.status !== "ACTIVE") {
+            return {
+                valid: false,
+                reason: "Event is not active"
+            }
+        }
+        const qrCode = await this.prisma.qrCode.findUnique({
+            where: {
+                code: qrCodeUniqueCode
+            }
+        })
+
+        if (!qrCode) {
+            return {
+                valid: false,
+                reason: "Invalid QR code"
+            }
+        }
+
+        if (now > qrCode.expiresAt || !qrCode.isActive) {
+            return {
+                valid: false,
+                reason: "QR Code has expired"
+            }
+        }
+
+
+        const isWinner: boolean = Math.random() < 0.5
+
+        return {
+            valid: true,
+            isWinner: isWinner,
+            eventId: qrCode.eventId,
+            qrCodeId: qrCode.id
+        }
+     }
+
     async verifyQRCode(eventUniqueCode: string, qrCodeUniqueCode: string) {
         const now = new Date()
 
@@ -98,7 +148,7 @@ export class QrCodeService {
             }
         }
 
-        if (now < event.eventStartDate || now > event.eventEndDate) {
+        if (now < event.eventStartTime || now > event.eventEndTime) {
             return {
                 valid: false,
                 reason: "event not active"
