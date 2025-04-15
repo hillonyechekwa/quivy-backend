@@ -29,14 +29,12 @@ export class CreateEventDto {
     @ApiProperty({ description: 'Duration in minutes for which QR code remains valid' })
     qrCodeValidityDuration: number;
 
-    @IsEnum(EventStatus)
+    @IsString()
     @IsOptional()
     @ApiProperty({ 
-    enum: EventStatus, 
-    default: EventStatus.DRAFTED,
     description: 'Status of the event'
     })
-    status?: EventStatus;
+    status?: string;
 
     @IsArray()
     @ApiProperty()

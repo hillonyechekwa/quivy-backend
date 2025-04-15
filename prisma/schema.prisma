@@ -49,9 +49,9 @@ model Event {
   id String @id @default(uuid())
   name String
   description String
-  date DateTime
-  eventStartTime DateTime
-  eventEndTime DateTime
+  date DateTime @db.Date
+  eventStartTime DateTime @db.Time()
+  eventEndTime DateTime @db.Time()
   qrCodeValidityDuration Int
   activeQrCode QrCode?
   status EventStatus @default(DRAFTED)

@@ -3,7 +3,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 // import { UpdateEventDto } from './dto/update-event.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { nanoid } from "nanoid";
-import {Event} from "@prisma/client"
+import {Event, EventStatus} from "@prisma/client"
 import { PrizeService } from './prize.service';
 
 
@@ -21,6 +21,16 @@ export class EventsService {
   async newEvent(createEventDto: CreateEventDto, userId: string): Promise<Event> {
       const uniqueCode = nanoid();
       
+      // Upload all prize images first, before starting the transaction
+      const prizeImagesUploaded = await Promise.all(
+          (createEventDto.prizes || []).map(async (prize) => {
+              const imageUrl = prize.image ? await this.prizeService.uploadPrizeImage(prize.image) : null;
+              return {
+                  ...prize,
+                  imageUrl
+              };
+          })
+      );
 
     return this.prisma.$transaction(async (tx) => {
       // First, create the event without prizes
@@ -32,7 +42,7 @@ export class EventsService {
         eventStartTime: createEventDto.eventStartTime,
         eventEndTime: createEventDto.eventEndTime,
         qrCodeValidityDuration: createEventDto.qrCodeValidityDuration,
-        status: createEventDto.status || 'DRAFTED',
+        status: createEventDto.status === "active" ? EventStatus.ACTIVE : createEventDto.status === "upcoming" ? EventStatus.UPCOMING : EventStatus.DRAFTED,
         uniqueCode: uniqueCode,
         user: {
           connect: {
@@ -47,15 +57,13 @@ export class EventsService {
         }
       });
       
-      // If there are prizes, create them using the prize service
-      if (createEventDto.prizes && createEventDto.prizes.length > 0) {
-        for (const prizeData of createEventDto.prizes) {
-          // Use your prize service to create each prize
-          // This will handle image uploads properly
+      // Create prizes with pre-uploaded image URLs
+      if (prizeImagesUploaded.length > 0) {
+        for (const prizeData of prizeImagesUploaded) {
           await this.prizeService.createPrizeWithTransaction(
             tx,
-            prizeData,
-            newEvent.id // Link to the newly created event
+            { ...prizeData, imageUrl: prizeData.imageUrl },
+            newEvent.id
           );
         }
       }

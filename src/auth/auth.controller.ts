@@ -86,12 +86,12 @@ export class AuthController {
 
     return {
       status: result ? 'success' : 'failure',
-      message: null
+      message: result ? 'Email verified successfully' : 'Email verification failed',
     }
   }
 
 
-  @Put("change-password")
+  @Put("change-password") //changeing password while signed in
   async changePassword(@CurrentUser() user, @Body() changePassword: ChangePasswordDto) {
     return this.authService.changeCurrentUserPassword(changePassword, user.userId)
   }
@@ -102,7 +102,7 @@ export class AuthController {
     return this.authService.forgotPassword(forgotPassword)
   }
 
-  @Post("reset-password")
+  @Post("reset-password") //is used with forgot-password
   async resetPassword(@Body() reset: ResetPassswordDto) {
     return this.authService.resetPassword(reset)
   }

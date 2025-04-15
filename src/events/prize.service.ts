@@ -5,11 +5,8 @@ import { Prisma, Prize } from "@prisma/client";
 import { CreatePrizeDto } from "./dto/create-prize.dto";
 import { FileUpload } from "src/user/fileUpload.service";
 
-
-
 @Injectable()
 export class PrizeService {
-    
     constructor(
         private prisma: PrismaService,
         private config: ConfigService,
@@ -30,7 +27,7 @@ export class PrizeService {
         return newPrize
     }
 
-    async pickRandomPrize(eventId: string): Promise<Prize>{
+    async pickRandomPrize(eventId: string): Promise<Prize> {
         const prizes = await this.prisma.prize.findMany({
             where: {
                 eventId: eventId,
@@ -46,13 +43,21 @@ export class PrizeService {
         return prizes[randomIndex]
     }
 
+    async uploadPrizeImage(file: Express.Multer.File): Promise<string | undefined> {
+        if (!file) return undefined;
+        const uploadResult = await this.fileUpload.uploadFile(file, "prizes");
+        return uploadResult?.url;
+    }
 
     async createPrizeWithTransaction(tx: Prisma.TransactionClient, createPrizeDto: CreatePrizeDto, eventId: string): Promise<Prize> {
-        const prizeImageUrl = await this.fileUpload.uploadFile(createPrizeDto.image, "prizes")
+        // Use the existing imageUrl from the DTO instead of uploading within transaction
         const newPrize = await tx.prize.create({
             data: {
-                ...createPrizeDto,
-                imageUrl: prizeImageUrl?.url,
+                name: createPrizeDto.name,
+                description: createPrizeDto.description,
+                quantity: createPrizeDto.quantity,
+                status: createPrizeDto.status,
+                imageUrl: createPrizeDto.imageUrl || null, // Use the URL that was uploaded before the transaction
                 eventId: eventId,
             }
         })
