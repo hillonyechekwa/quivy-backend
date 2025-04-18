@@ -1,7 +1,7 @@
 import { IsDateString, IsArray, IsInt, IsOptional, IsString, IsEnum, Min } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { EventStatus} from "@prisma/client";
-import { CreatePrizeDto as Prize } from "./create-prize.dto"; // Adjust the import path as necessary
+// import { CreatePrizeDto as Prize } from "./create-prize.dto"; // Adjust the import path as necessary
 
 export class CreateEventDto {
     @IsString()
@@ -36,9 +36,9 @@ export class CreateEventDto {
     })
     status?: string;
 
-    @IsArray()
-    @ApiProperty()
-    prizes: Prize[]; 
+    // @IsArray()
+    // @ApiProperty()
+    // prizes: Prize[]; 
 
     @IsString()
     @IsOptional()

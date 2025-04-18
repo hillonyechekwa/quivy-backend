@@ -1,5 +1,6 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import * as argon2 from 'argon2'
+import * as bcrypt from 'bcrypt'
 import { generateOTP } from './utils/otp.utils';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -35,7 +36,7 @@ export class VerificationService {
     
     const otp = generateOTP(size)
 
-    const hashedToken = await argon2.hash(otp)
+    const hashedToken = await bcrypt.hash(otp, 10)
 
     //remove any previous otps with the same userId
     const hasVerification = await this.prisma.verification.findUnique({
@@ -73,7 +74,7 @@ export class VerificationService {
       }
     })
 
-    if (validToken && await argon2.verify(validToken.token, token)) {
+    if (validToken && await bcrypt.compare(validToken.token, token)) {
       await this.prisma.verification.delete({
         where: {
           id: validToken.id

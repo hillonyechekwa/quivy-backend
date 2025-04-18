@@ -13,6 +13,9 @@ import { ConfigModule } from '@nestjs/config';
 import { SupabaseModule } from './supabase/supabase.module';
 import { VerificationModule } from './verification/verification.module';
 import { ParticipantsModule } from './participants/participants.module';
+import { PrizesModule } from './prizes/prizes.module';
+import { FileUploadService } from './file-upload/file-upload.service';
+import { FileUploadModule } from './file-upload/file-upload.module';
 import configuration from './config/configuration'
 
 @Module({
@@ -24,7 +27,9 @@ import configuration from './config/configuration'
     ConfigModule.forRoot(configuration),
     SupabaseModule,
     VerificationModule,
-    ParticipantsModule],
+    ParticipantsModule,
+    PrizesModule,
+    FileUploadModule],
   controllers: [AppController],
   providers: [
     AppService,
@@ -35,7 +40,8 @@ import configuration from './config/configuration'
     {
       provide: APP_GUARD,
       useClass: AccountGuard  
-    }
+    },
+    FileUploadService
   ],
 })
 export class AppModule {}

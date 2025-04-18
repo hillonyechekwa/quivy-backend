@@ -51,6 +51,7 @@ export class AuthController {
   refreshToken(@CurrentUser() user) {
     try {
       const userId = user.userId
+      console.log('refresh controller user id', userId)
       return this.authService.refreshToken(userId);
 
     } catch (error) {
@@ -59,6 +60,7 @@ export class AuthController {
   }
 
   @Post('signout')
+  @HttpCode(HttpStatus.OK)
   signOut(@Req() req, @CurrentUser() user) {
     const userId = user.userId;
     return this.authService.signOut(userId);
@@ -66,6 +68,7 @@ export class AuthController {
   
   //@UseGuards(JwtAuthGuard)
   @NoAccountGuard()
+  @HttpCode(HttpStatus.OK)
   @Post('otp-verification')
   async generateEmailVerification(@CurrentUser() user){
     const userId = user.userId
@@ -79,6 +82,7 @@ export class AuthController {
 
   //@UseGuards(JwtAuthGuard)
   @NoAccountGuard()
+  @HttpCode(HttpStatus.OK)
   @Post("verify/:otp")
   async verifyEmail(@Param('otp') otp: string, @CurrentUser() user){
     const userId = await user.userId
@@ -90,18 +94,20 @@ export class AuthController {
     }
   }
 
-
+  @HttpCode(HttpStatus.OK)
   @Put("change-password") //changeing password while signed in
   async changePassword(@CurrentUser() user, @Body() changePassword: ChangePasswordDto) {
     return this.authService.changeCurrentUserPassword(changePassword, user.userId)
   }
 
   @Public()
+  @HttpCode(HttpStatus.OK)
   @Post("forgot-password")
   async forgotPassword(@Body() forgotPassword: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPassword)
   }
-
+  
+  @HttpCode(HttpStatus.OK)
   @Post("reset-password") //is used with forgot-password
   async resetPassword(@Body() reset: ResetPassswordDto) {
     return this.authService.resetPassword(reset)

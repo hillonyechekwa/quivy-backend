@@ -7,7 +7,7 @@ import * as bcrypt from 'bcrypt'
 import { NewProfileDto } from './dto/new-profile.dto';
 import { ConfigService } from '@nestjs/config';
 import { updateProfileDto } from './dto/update-profile.dto';
-import { FileUpload } from './fileUpload.service';
+import { FileUploadService } from 'src/file-upload/file-upload.service';
 
 
 @Injectable()
@@ -16,7 +16,7 @@ export class UserService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
-    private fileUpload: FileUpload
+    private fileUpload: FileUploadService
   ) {}
   
   async updateUserAccountStatus(userId: string) {
@@ -157,7 +157,7 @@ export class UserService {
     let uploadedImgDetails
 
     if (profileData.profileImage) {
-      uploadedImgDetails = this.fileUpload.uploadFile(profileData.profileImage, "avatars")
+      uploadedImgDetails = this.fileUpload.uploadFileToSupabase(profileData.profileImage, "avatars")
     }
 
     const profile = await this.prisma.profile.create({
@@ -179,7 +179,7 @@ export class UserService {
     let uploadedImgDetails
     
     if (profileData.profileImage) {
-      uploadedImgDetails = this.fileUpload.uploadFile(profileData.profileImage, "avatars")
+      uploadedImgDetails = this.fileUpload.uploadFileToSupabase(profileData.profileImage, "avatars")
     }
 
     const updatedProfile = await this.prisma.profile.update({

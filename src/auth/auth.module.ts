@@ -9,7 +9,7 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { PassportModule} from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import jwtConfig from 'src/config/jwt.config';
-import refreshConfig from 'src/config/refresh.config';
+import refreshJwtConfig from 'src/config/refresh.config';
 import { ConfigModule } from '@nestjs/config';
 import { VerificationModule } from 'src/verification/verification.module';
 import { MailerModule } from 'src/mailer/mailer.module';
@@ -26,7 +26,7 @@ import { SupabaseModule } from 'src/supabase/supabase.module';
     MailerModule,
     forwardRef(() => SupabaseModule),
     ConfigModule.forFeature(jwtConfig),
-    ConfigModule.forFeature(refreshConfig),
+    ConfigModule.forFeature(refreshJwtConfig),
     JwtModule.registerAsync({
       useFactory: async () => ({
         secret: jwtConfig().secret,

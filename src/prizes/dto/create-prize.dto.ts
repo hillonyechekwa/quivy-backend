@@ -18,11 +18,11 @@ export class CreatePrizeDto {
     
     @IsEnum(PrizeStatus)
     @ApiProperty({ description: 'status of the prize' })
-    status: PrizeStatus
+    status?: PrizeStatus
     
-    @ApiProperty({ description: 'Image File of the prize' })
-    @IsOptional()
-    image?: Express.Multer.File
+    // @ApiProperty({ description: 'Image File of the prize' })
+    // @IsOptional()
+    // image?: Express.Multer.File
     
     @IsString()
     @IsOptional()
@@ -31,5 +31,5 @@ export class CreatePrizeDto {
     
     @IsString()
     @ApiProperty({ description: 'ID of the event' })
-    eventId: string
+    eventId?: string
 }

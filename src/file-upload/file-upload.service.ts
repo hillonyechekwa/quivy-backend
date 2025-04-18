@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { nanoid } from "nanoid";
 
 @Injectable()
-export class FileUpload {
+export class FileUploadService {
     private supabase: SupabaseClient;
 
     constructor(
@@ -52,7 +52,7 @@ export class FileUpload {
         }
     }
 
-    async uploadFile(file: Express.Multer.File, bucket: string) {
+    async uploadFileToSupabase(file: Express.Multer.File, bucket: string) {
         if (!file) {
             throw new BadRequestException('No file provided');
         }
@@ -82,6 +82,9 @@ export class FileUpload {
 
             const { data: { publicUrl } } = await this.supabase.storage.from(bucket).getPublicUrl(filePath);
 
+            console.log('public url', publicUrl)
+
+            
             return {
                 path: filePath,
                 url: publicUrl,

@@ -1,4 +1,5 @@
 import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { PrismaClientExceptionFilter } from './prisma-client-exception/prisma-client-exception.filter';
 import {ClassSerializerInterceptor, ValidationPipe, /*ClassSerializerInterceptor*/} from "@nestjs/common"
@@ -7,7 +8,9 @@ import {SwaggerModule, DocumentBuilder} from "@nestjs/swagger"
 
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useBodyParser('json', {limit: '50mb'})
+  app.useBodyParser('urlencoded', {extended: true, limit: '50mb'})
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true

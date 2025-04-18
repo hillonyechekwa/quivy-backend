@@ -9,135 +9,126 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-
 model User {
-  id  String @id @default(uuid())
-  email String @unique
-  password String? @unique
-  hashedRefreshToken String? @unique
-  authProvider String?
-  accountStatus AccountStatus @default(INACTIVE)
-  emailVerifiedAt DateTime? 
-  Verification Verification[]
-  events Event[]
-  profile Profile?
+  id                 String         @id @default(uuid())
+  email              String         @unique
+  password           String?        @unique
+  hashedRefreshToken String?        @unique
+  authProvider       String?
+  accountStatus      AccountStatus  @default(INACTIVE)
+  emailVerifiedAt    DateTime?
+  Verification       Verification[]
+  events             Event[]
+  profile            Profile?
   passwordResetToken resetToken?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt()
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt()
 }
 
-
-model Profile{
-  id  String @id @default(uuid())
+model Profile {
+  id              String  @id @default(uuid())
   profileImageUrl String?
-  fullname String?
-  phoneNumber Int?
-  name String?
-  address String?
-  user User @relation(fields: [userId], references: [id] )
-  userId String @unique
+  fullname        String?
+  phoneNumber     Int?
+  name            String?
+  address         String?
+  user            User    @relation(fields: [userId], references: [id])
+  userId          String  @unique
 }
 
 // don't forget to add profile model => fullname, address, phonenumber and image
 
 model Event {
-  id String @id @default(uuid())
-  name String
-  description String
-  date DateTime @db.Date
-  eventStartTime DateTime @db.Time()
-  eventEndTime DateTime @db.Time()
+  id                     String      @id @default(uuid())
+  name                   String
+  description            String
+  date                   DateTime    @db.Date
+  eventStartTime         DateTime    @db.Time()
+  eventEndTime           DateTime    @db.Time()
   qrCodeValidityDuration Int
-  activeQrCode QrCode?
-  status EventStatus @default(DRAFTED)
-  uniqueCode String? @unique
-  winners Winner[]
-  prizes Prize[]
-  user User @relation(fields: [userId], references: [id] )
-  userId String @unique
-  createdAt DateTime @default(now())
+  activeQrCode           QrCode?
+  status                 EventStatus @default(DRAFTED)
+  uniqueCode             String?     @unique
+  winners                Winner[]
+  prizes                 Prize[]
+  user                   User        @relation(fields: [userId], references: [id])
+  userId                 String
+  createdAt              DateTime    @default(now())
 }
-
 
 model QrCode {
-  id String @id @default(uuid())
-  code String @unique
+  id          String   @id @default(uuid())
+  code        String   @unique
   generatedAt DateTime @default(now())
-  expiresAt DateTime
-  isActive Boolean @default(true)
-  event Event @relation(fields: [eventId], references: [id])
-  eventId String @unique
-  winners Winner[]  
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     String   @unique
+  winners     Winner[]
 }
 
-
 model Verification {
-  id String @id @default(uuid())
-  user User @relation(fields: [userId], references: [id])
-  userId String @unique
-  token String
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  token     String
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
 
-model Prize{
-  id String @id @default(uuid())
-  name String
+model Prize {
+  id          String      @id @default(uuid())
+  name        String
   description String
-  imageUrl String?
-  quantity Int @default(1)
-  status PrizeStatus @default(AVAILABLE)
-  event Event @relation(fields: [eventId], references: [id])
-  eventId String
-  winners Winner?
+  imageUrl    String?
+  quantity    Int         @default(1)
+  status      PrizeStatus @default(AVAILABLE)
+  event       Event       @relation(fields: [eventId], references: [id])
+  eventId     String
+  winners     Winner?
 }
-
 
 model Winner {
-  id String @id @default(uuid())
-  event Event @relation(fields: [eventId], references: [id])
-  eventId String @unique
-  selectedAt DateTime @default(now())
-  name String
-  email String
+  id          String   @id @default(uuid())
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     String   @unique
+  selectedAt  DateTime @default(now())
+  name        String
+  email       String
   phoneNumber Int
-  address String
-  prize Prize @relation(fields: [prizeId], references: [id])
-  prizeId String @unique
-  qrCode QrCode @relation(fields: [qrCodeId], references: [id])
-  qrCodeId String @unique
+  address     String
+  prize       Prize    @relation(fields: [prizeId], references: [id])
+  prizeId     String   @unique
+  qrCode      QrCode   @relation(fields: [qrCodeId], references: [id])
+  qrCodeId    String   @unique
 }
 
-
-model resetToken{
-  id String @id @default(uuid())
-  token String @unique
-  user User @relation(fields: [userId], references: [id])
-  userId String @unique
+model resetToken {
+  id             String   @id @default(uuid())
+  token          String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  userId         String   @unique
   expirationDate DateTime
 }
 
-
-enum EventStatus{
+enum EventStatus {
   DRAFTED
   UPCOMING
   ACTIVE
   COMPLETED
 }
 
-
-enum PrizeStatus{
+enum PrizeStatus {
   AVAILABLE
   ASSIGNED
 }
 
-
-enum AccountStatus{
+enum AccountStatus {
   ACTIVE
   INACTIVE
 }

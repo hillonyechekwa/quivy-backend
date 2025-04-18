@@ -4,6 +4,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { UserService } from 'src/user/user.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import * as argon2 from 'argon2'
+import * as bcrypt from 'bcrypt'
 
 
 @Injectable()
@@ -32,7 +33,7 @@ export class SupabaseAuthAdapter {
         }
 
         const { accessToken, refreshToken } = await this.auth.generateTokens(user.id, user.email)
-        const hashedRefreshToken = await argon2.hash(refreshToken)
+        const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
         await this.user.updateHashedRefreshToken(user.id, hashedRefreshToken)
 
         return {            

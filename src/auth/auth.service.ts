@@ -11,7 +11,7 @@ import { VerificationService } from 'src/verification/verification.service';
 import { MailerService } from 'src/mailer/mailer.service';
 import * as bcrypt from "bcrypt"
 import * as argon2 from "argon2"
-import refreshConfig from 'src/config/refresh.config'
+import refreshJwtConfig from 'src/config/refresh.config'
 import jwtConfig from 'src/config/jwt.config';
 import { nanoid } from 'nanoid';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -23,8 +23,8 @@ import { ResetPassswordDto } from './dto/reset-password.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(refreshConfig.KEY)
-    private refreshTokenConfig: ConfigType<typeof refreshConfig>,
+    @Inject(refreshJwtConfig.KEY)
+    private refreshTokenConfig: ConfigType<typeof refreshJwtConfig>,
     private userService: UserService,
     private jwtService: JwtService,
     @Inject(jwtConfig.KEY)
@@ -68,11 +68,12 @@ export class AuthService {
     if(!passwordMatched) throw new UnauthorizedException("Invalid Credentials!")
 
     if (passwordMatched) {
-      delete user.password
+      // delete user.password
 
       const { accessToken, refreshToken } = await this.generateTokens(user.id, user.email)
-      const hashedRefreshToken = await argon2.hash(refreshToken)
-
+      console.log('tokens', {accessToken, refreshToken})
+      const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
+      console.log('hashedRefreshToken', hashedRefreshToken)
       await this.userService.updateHashedRefreshToken(user.id, hashedRefreshToken)
 
       return {
@@ -94,7 +95,7 @@ export class AuthService {
     const user = await this.userService.createUser(createUserDto)
     const {accessToken, refreshToken} = await this.generateTokens(user.id, user.email)
 
-    const hashedRefreshToken = await argon2.hash(refreshToken)
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
 
     await this.userService.updateHashedRefreshToken(user.id, hashedRefreshToken)
 
@@ -118,14 +119,15 @@ export class AuthService {
   async validateRefreshToken(userId: string, refreshToken: string) {
     const user = await this.userService.findById(userId)
 
+
     if (!user || !user.hashedRefreshToken) {
       throw new UnauthorizedException("Invalid Refresh Token!!")
     }
 
-    const refreshTokenMatches = await argon2.verify(user.hashedRefreshToken, refreshToken)
+    const refreshTokenMatches = await bcrypt.compare(refreshToken, user.hashedRefreshToken)
 
     if (!refreshTokenMatches) {
-      throw new UnauthorizedException("Invalid Refresh Token")
+      throw new UnauthorizedException("refreshTokens don't match!!!")
     }
 
     return {
@@ -136,10 +138,12 @@ export class AuthService {
 
   async refreshToken(userId: string) {
     const user = await this.userService.findOne(userId)
+    console.log('refresh method user', user)
     const { accessToken, refreshToken } = await this.generateTokens(userId, user.email)
-    const hashedRefreshToken = await argon2.hash(refreshToken)
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
+    console.log('hashed refreshtoken', hashedRefreshToken)
     await this.userService.updateHashedRefreshToken(userId, hashedRefreshToken)
-    // console.log("Token Refreshed", {accessToken, refreshToken})
+    console.log("Token Refreshed", {accessToken, refreshToken})
     return {
       accessToken,
       refreshToken

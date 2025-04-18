@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode, UploadedFiles, UseInterceptors, ParseFilePipe, BadRequestException } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { EventsService } from './events.service';
-import { PrizeService } from './prize.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { QrCodeService } from './qrcode.service';
@@ -14,7 +13,6 @@ import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
 export class EventsController {
   constructor(
     private readonly eventsService: EventsService,
-    private readonly prizeService: PrizeService,
     private qrCodeService: QrCodeService
   ) { }
 
@@ -35,58 +33,87 @@ export class EventsController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: EventEntity })
-  @Post('create')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'prizeImages', maxCount: 10 } // Single field for all prize images
-  ]))
-  async createEvent(
-    @CurrentUser() user,
-    @Body() createEvent: any, // Temporarily use any to parse the body manually
-    @UploadedFiles(
-      new ParseFilePipe({
-        fileIsRequired: false
-      })
-    ) files: { prizeImages?: Express.Multer.File[] }
-  ): Promise<Event> {
-    const userId = await user.userId;
-    
-    // Parse the event data
-    const eventData: CreateEventDto = {
-      name: createEvent.title,
-      description: createEvent.description,
-      date: new Date(createEvent.date),
-      eventStartTime: new Date(createEvent.eventStartTime),
-      eventEndTime: new Date(createEvent.eventEndTime),
-      qrCodeValidityDuration: parseInt(createEvent.qrCodeValidityDuration),
-      status: createEvent.status,
-      prizes: []
-    };
-
-    // Parse prizes array safely
-    if (createEvent.prizes) {
-      let prizesData;
-      try {
-        // Handle both string and array cases
-        prizesData = typeof createEvent.prizes === 'string' 
-          ? JSON.parse(createEvent.prizes)
-          : createEvent.prizes;
-
-        eventData.prizes = prizesData.map((prize: any, index: number) => ({
-          name: prize.name,
-          description: prize.description,
-          quantity: parseInt(prize.quantity.toString()),
-          status: "AVAILABLE",
-          image: files?.prizeImages?.[index],
-          eventId: "" // This will be set by the service
-        }));
-      } catch (error) {
-        throw new BadRequestException('Invalid prizes data format');
-      }
-    }
-    
-    return await this.eventsService.newEvent(eventData, userId);
+  @Get(":id/status")
+  async getEventStatus(@Param("id") id: string) {
+    return this.eventsService.getEventStatus(id)
   }
+
+  @HttpCode(HttpStatus.OK)
+  @Get(":id/active-qr")
+  async getActiveQr(@Param("id") id: string) {
+    return this.eventsService.getActiveQrCode(id)
+  }
+
+  // @HttpCode(HttpStatus.OK)
+  // @ApiOkResponse({ type: EventEntity })
+  // @Post('create')
+  // @UseInterceptors(FileFieldsInterceptor([
+  //   { name: 'prizeImages', maxCount: 10 } // Single field for all prize images
+  // ]))
+  // async createEvent(
+  //   @CurrentUser() user,
+  //   @Body() createEvent: any,
+  //   @UploadedFiles(
+  //     new ParseFilePipe({
+  //       fileIsRequired: false
+  //     })
+  //   ) files: { prizeImages?: Express.Multer.File[] }
+  // ): Promise<Event> {
+  //   const userId = await user.userId;
+    
+  //   if (!createEvent.name && !createEvent.title) {
+  //     throw new BadRequestException('Event name is required');
+  //   }
+    
+  //   // Parse the event data
+  //   const eventData: CreateEventDto = {
+  //     name: createEvent.name || createEvent.title, // Use name if provided, fall back to title
+  //     description: createEvent.description,
+  //     date: new Date(createEvent.date),
+  //     eventStartTime: new Date(createEvent.eventStartTime),
+  //     eventEndTime: new Date(createEvent.eventEndTime),
+  //     qrCodeValidityDuration: parseInt(createEvent.qrCodeValidityDuration),
+  //     status: createEvent.status,
+  //     prizes: []
+  //   };
+
+  //   // Parse prizes array safely
+  //   if (createEvent.prizes) {
+  //     try {
+  //       // Handle both string and array cases
+  //       const prizesData = typeof createEvent.prizes === 'string' 
+  //         ? JSON.parse(createEvent.prizes)
+  //         : createEvent.prizes;
+
+  //       eventData.prizes = prizesData.map((prize: any, index: number) => ({
+  //         name: prize.name,
+  //         description: prize.description,
+  //         quantity: parseInt(prize.quantity.toString()),
+  //         status: "AVAILABLE",
+  //         image: files?.prizeImages?.[index],
+  //         eventId: "" // This will be set by the service
+  //       }));
+  //     } catch (error) {
+  //       throw new BadRequestException('Invalid prizes data format');
+  //     }
+  //   }
+
+  //   console.log('createEventData', eventData)
+    
+  //   const newEvent = await this.eventsService.newEvent(eventData, userId);
+  //   console.log('newEvent', newEvent)
+  //   return newEvent
+  // }
+  
+  
+  @HttpCode(HttpStatus.OK)
+  @Post('create')
+  async createNewEvent(@CurrentUser() user, @Body() createEvent: CreateEventDto): Promise<Event>{
+    console.log('body', createEvent)
+    const userId = user.userId
+    return await this.eventsService.newEvent(createEvent, userId)
+  }
+
 
   @HttpCode(HttpStatus.OK)
   @Post(":eventId/generate-qr")
@@ -103,15 +130,5 @@ export class EventsController {
     return await this.qrCodeService.processScannedQrCode(uniqueCode, eventId)
   }
 
-  @HttpCode(HttpStatus.OK)
-  @Get(":id/status")
-  async getEventStatus(@Param("id") id: string) {
-    return this.eventsService.getEventStatus(id)
-  }
-
-  @HttpCode(HttpStatus.OK)
-  @Get(":id/active-qr")
-  async getActiveQr(@Param("id") id: string) {
-    return this.eventsService.getActiveQrCode(id)
-  }
+ 
 }

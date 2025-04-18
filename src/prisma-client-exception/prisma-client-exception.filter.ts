@@ -3,37 +3,33 @@ import { BaseExceptionFilter } from "@nestjs/core";
 import { Prisma } from "@prisma/client";
 import { Response } from "express";
 
-
-
 @Catch(Prisma.PrismaClientKnownRequestError)
-export class PrismaClientExceptionFilter extends BaseExceptionFilter{
+export class PrismaClientExceptionFilter extends BaseExceptionFilter {
     catch(exception: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost) {
-        console.error(exception.message)
-        const ctx = host.switchToHttp()
-        const response = ctx.getRequest<Response>()
-        const message = exception.message.replace(/\n/g, "")
-
-
+        console.error(exception.message);
+        const ctx = host.switchToHttp();
+        const response = ctx.getResponse<Response>();
+        const message = exception.message.replace(/\n/g, "");
 
         switch (exception.code) {
             case "P2002": {
-                const status = HttpStatus.CONFLICT
+                const status = HttpStatus.CONFLICT;
                 response.status(status).json({
                     statusCode: status,
-                    message: message
-                })
+                    message: "A record with this value already exists"
+                });
                 break;
             }
             case "P2025": {
-                const status = HttpStatus.CONFLICT
+                const status = HttpStatus.NOT_FOUND;
                 response.status(status).json({
                     statusCode: status,
-                    message: message
-                })
+                    message: "Record not found"
+                });
                 break;
             }
             default: {
-                super.catch(exception, host)
+                super.catch(exception, host);
                 break;
             }
         }
