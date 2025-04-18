@@ -31,7 +31,7 @@ export class EventEntity implements Event {
   status: EventStatus
 
   @ApiProperty()
-  uniqueCode?: string
+  uniqueCode: string
 
   @ApiProperty()
   winners: Winner[]
