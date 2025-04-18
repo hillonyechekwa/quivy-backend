@@ -16,9 +16,6 @@ export class EventEntity implements Event {
   date: Date
 
   @ApiProperty()
-  time: Date
-
-  @ApiProperty()
   eventStartTime: Date
 
   @ApiProperty()
@@ -26,9 +23,6 @@ export class EventEntity implements Event {
 
   @ApiProperty()
   qrCodeValidityDuration: number
-
-  @ApiProperty()
-  maxParticipants: number
 
   @ApiProperty()
   activeQrCode: QrCode
