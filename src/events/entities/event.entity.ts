@@ -25,13 +25,13 @@ export class EventEntity implements Event {
   qrCodeValidityDuration: number
 
   @ApiProperty()
-  activeQrCode: QrCode
+  activeQrCode?: QrCode
 
-  @ApiProperty()
+  @ApiProperty({default: EventStatus.DRAFTED})
   status: EventStatus
 
   @ApiProperty()
-  uniqueCode: string
+  uniqueCode?: string
 
   @ApiProperty()
   winners: Winner[]
