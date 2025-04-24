@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, HttpCode, HttpStatus, UseInterceptors, InternalServerErrorException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, HttpCode, HttpStatus, UseInterceptors, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { AnyFilesInterceptor, FilesInterceptor} from '@nestjs/platform-express';
 import { PrizesService } from './prizes.service';
 import { UploadedFiles } from '@nestjs/common';
@@ -16,6 +16,12 @@ export class PrizesController {
     private readonly prizesService: PrizesService,
     private readonly fileUploadService: FileUploadService
   ) { }
+  
+  @HttpCode(HttpStatus.OK)
+  @Get(":eventId")
+  async getPrizes(@Param("eventId") eventId: string){
+    return await this.prizesService.getPrizes(eventId)
+  }
 
   @HttpCode(HttpStatus.OK)
   @Post('create/:eventId')
@@ -100,5 +106,5 @@ export class PrizesController {
       throw new InternalServerErrorException('Failed to create prizes');
     }
   }
-
+  
 }

@@ -80,9 +80,9 @@ export class EventsService {
       const newEvent = await this.prisma.event.create({
         data: {
           ...createEventDto,
-          status: createEventDto.status === "active" ? EventStatus.ACTIVE : 
-                  createEventDto.status === "upcoming" ? EventStatus.UPCOMING : 
-                  EventStatus.DRAFTED,
+          status: createEventDto.status === "active" ? "ACTIVE" : 
+                  createEventDto.status === "upcoming" ? "UPCOMING" : 
+                  "DRAFTED",
           uniqueCode,
           user: {
             connect: {

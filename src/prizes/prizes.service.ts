@@ -15,8 +15,18 @@ export class PrizesService {
           private config: ConfigService,
           private fileUpload: FileUploadService
   ) { }
-  
-    async createSinglePrize(createPrizeDto: CreatePrizeDto, eventId: string): Promise<Prize> {
+ 
+  async getPrizes(eventId: string): Promise<Prize[]>{
+    const prizes = await this.prisma.prize.findMany({
+      where: {
+        eventId
+      }
+    })
+
+    return prizes
+  }
+
+  async createSinglePrize(createPrizeDto: CreatePrizeDto, eventId: string): Promise<Prize> {
 
           // if (!createPrizeDto.image) return undefined;
   
