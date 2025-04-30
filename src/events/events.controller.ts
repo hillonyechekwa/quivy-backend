@@ -119,7 +119,13 @@ export class EventsController {
 
     const message = isWinner.result ? `Congratulations, you won a ${isWinner.prize}` : `Sorry, you didn't win anything`
     const frontendUrl = await this.config.get('FRONTEND_URL')
-    return res.redirect(302, `${frontendUrl}/results/${event.id}?message=${encodeURIComponent(message)}`)
+
+    if(isWinner.result){
+      const prizeId = isWinner.prizeId
+      return res.redirect(302, `${frontendUrl}/results/win/${event.id}/${prizeId}/?message=${encodeURIComponent(message)}`)
+    } else {
+      return res.redirect(302, `${frontendUrl}/results/loss/${event.id}/?message=${encodeURIComponent(message)}`)
+    }
   }
  
 }
