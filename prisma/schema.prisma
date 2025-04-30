@@ -25,6 +25,7 @@ model User {
   Verification       Verification[]
   events             Event[]
   profile            Profile?
+  notifcations       Notification[]
   passwordResetToken resetToken?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt()
@@ -56,6 +57,7 @@ model Event {
   uniqueCode             String?     @unique
   scans                  Int?         @default(0)
   clicks                 Int?         @default(0)
+  notifications          Notification[]
   winners                Winner[]
   prizes                 Prize[]
   user                   User        @relation(fields: [userId], references: [id])
@@ -104,6 +106,19 @@ model resetToken {
   user           User     @relation(fields: [userId], references: [id])
   userId         String   @unique
   expirationDate DateTime
+}
+
+model Notification{
+  id String @id @default(uuid())
+  userId String
+  eventId String?
+  title String
+  message String
+  isRead Boolean @default(false)
+  createAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  event Event? @relation(fields: [eventId], references: [id])
 }
 
 enum EventStatus {

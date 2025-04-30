@@ -192,4 +192,13 @@ export class EventsService {
 
 
     }
+
+    async getEventNotifications(userId: string){
+      return await this.prisma.notification.findMany({
+        where: {
+          userId: userId
+        },
+        orderBy: {createdAt: 'desc'}
+      })
+    }
 }

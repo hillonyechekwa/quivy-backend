@@ -1,18 +1,21 @@
-import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode, UploadedFiles, UseInterceptors, ParseFilePipe, BadRequestException, Res, NotFoundException } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode, Sse, BadRequestException, Res, NotFoundException, Req } from '@nestjs/common';
+import { Response } from 'express';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { EventEntity } from './entities/event.entity';
+import { EventSseGateway } from './sse/event-sse.gateway';
 import { Event } from '@prisma/client';
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { Public } from 'src/decorators/public.decorator';
 
 @Controller('events')
 @ApiTags('Events')
 export class EventsController {
   constructor(
     private readonly eventsService: EventsService,
+    private readonly sseGateway: EventSseGateway,
     private readonly config: ConfigService
   ) { }
 
@@ -109,16 +112,22 @@ export class EventsController {
     return await this.eventsService.newEvent(createEvent, userId)
   }
 
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Get("scan/:code")
   async generateQrCode(@Param("code") code: string, @Res() res){
     const event = await this.eventsService.findByCode(code)
+    const frontendUrl = await this.config.get('FRONTEND_URL')
+
     if(!event) throw new NotFoundException("Event not found")
-    
+    const closedMessage = "Sorry this giveaway event is already closed"
+    if(event.status === "CLOSED"){
+      return res.redirect(302, `$frontendUrl/results/loss${event.id}?message=${encodeURIComponent(closedMessage)}`)
+    }
+
     const isWinner = await this.eventsService.getResults(event.id)
 
     const message = isWinner.result ? `Congratulations, you won a ${isWinner.prize}` : `Sorry, you didn't win anything`
-    const frontendUrl = await this.config.get('FRONTEND_URL')
 
     if(isWinner.result){
       const prizeId = isWinner.prizeId
@@ -127,5 +136,24 @@ export class EventsController {
       return res.redirect(302, `${frontendUrl}/results/loss/${event.id}/?message=${encodeURIComponent(message)}`)
     }
   }
- 
+  
+  @Get('stream')
+  stream(@Res() res: Response){
+    res.set({
+      'Content-Type': 'text/event-stream',
+      'Cache-control': 'no-cache',
+      connection: 'keep-alive'
+    })
+
+    res.flushHeaders()
+    this.sseGateway.addClient(res)
+  }
+
+  @Get('notifications')
+  async getUserNotifications(@CurrentUser() user){
+    const userId = user.userId
+    const notifications = await this.eventsService.getEventNotifications(userId)
+    return notifications
+  }
+  
 }

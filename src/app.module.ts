@@ -17,6 +17,7 @@ import { PrizesModule } from './prizes/prizes.module';
 import { FileUploadService } from './file-upload/file-upload.service';
 import { FileUploadModule } from './file-upload/file-upload.module';
 import configuration from './config/configuration'
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [UserModule,
@@ -27,6 +28,7 @@ import configuration from './config/configuration'
     ConfigModule.forRoot(configuration),
     SupabaseModule,
     VerificationModule,
+    ScheduleModule.forRoot(),
     ParticipantsModule,
     PrizesModule,
     FileUploadModule],
