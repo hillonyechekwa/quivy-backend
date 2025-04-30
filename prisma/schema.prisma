@@ -51,9 +51,11 @@ model Event {
   eventStartTime         DateTime    @db.Time()
   eventEndTime           DateTime    @db.Time()
   qrCodeValidityDuration Int
-  activeQrCode           QrCode?
+  qrCodeUrl              String
   status                 EventStatus @default(DRAFTED)
   uniqueCode             String?     @unique
+  scans                  Int?         @default(0)
+  clicks                 Int?         @default(0)
   winners                Winner[]
   prizes                 Prize[]
   user                   User        @relation(fields: [userId], references: [id])
@@ -61,16 +63,6 @@ model Event {
   createdAt              DateTime    @default(now())
 }
 
-model QrCode {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  generatedAt DateTime @default(now())
-  expiresAt   DateTime
-  isActive    Boolean  @default(true)
-  event       Event    @relation(fields: [eventId], references: [id])
-  eventId     String   @unique
-  winners     Winner[]
-}
 
 model Verification {
   id        String   @id @default(uuid())
@@ -104,8 +96,6 @@ model Winner {
   address     String
   prize       Prize    @relation(fields: [prizeId], references: [id])
   prizeId     String   @unique
-  qrCode      QrCode   @relation(fields: [qrCodeId], references: [id])
-  qrCodeId    String   @unique
 }
 
 model resetToken {
@@ -120,7 +110,7 @@ enum EventStatus {
   DRAFTED
   UPCOMING
   ACTIVE
-  COMPLETED
+  CLOSED
 }
 
 enum PrizeStatus {

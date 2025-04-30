@@ -96,4 +96,22 @@ export class FileUploadService {
             throw new BadRequestException(error.message || 'Failed to upload file');
         }
     }
+
+    async uploadQrCode(buffer: Buffer, folder: string, fileName: string) {
+        const path = `${folder}/${fileName}`
+
+        const {error} = await this.supabase.storage.from(folder)
+        .upload(path, buffer, {
+            contentType: 'image/png',
+            upsert: true
+        })
+
+        if(error) throw error
+
+        const {data: publicUrlData} = await this.supabase.storage
+        .from(folder)
+        .getPublicUrl(path)
+
+        return publicUrlData.publicUrl
+    }
 }

@@ -4,10 +4,12 @@ import { EventsController } from './events.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { QrCodeService } from './qrcode.service';
+import { FileUploadModule } from 'src/file-upload/file-upload.module';
+import { PrizesModule } from 'src/prizes/prizes.module';
 
 
 @Module({
-  imports: [PrismaModule, ConfigModule],
+  imports: [PrismaModule, ConfigModule, FileUploadModule, PrizesModule],
   controllers: [EventsController],
   providers: [EventsService, QrCodeService],
   exports: [EventsService],

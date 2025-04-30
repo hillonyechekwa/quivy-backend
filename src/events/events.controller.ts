@@ -1,19 +1,19 @@
-import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode, UploadedFiles, UseInterceptors, ParseFilePipe, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode, UploadedFiles, UseInterceptors, ParseFilePipe, BadRequestException, Res, NotFoundException } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
-import { QrCodeService } from './qrcode.service';
 import { EventEntity } from './entities/event.entity';
 import { Event } from '@prisma/client';
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('events')
 @ApiTags('Events')
 export class EventsController {
   constructor(
     private readonly eventsService: EventsService,
-    private qrCodeService: QrCodeService
+    private readonly config: ConfigService
   ) { }
 
   @HttpCode(HttpStatus.OK)
@@ -38,11 +38,6 @@ export class EventsController {
     return this.eventsService.getEventStatus(id)
   }
 
-  @HttpCode(HttpStatus.OK)
-  @Get(":id/active-qr")
-  async getActiveQr(@Param("id") id: string) {
-    return this.eventsService.getActiveQrCode(id)
-  }
 
   // @HttpCode(HttpStatus.OK)
   // @ApiOkResponse({ type: EventEntity })
@@ -114,21 +109,17 @@ export class EventsController {
     return await this.eventsService.newEvent(createEvent, userId)
   }
 
-
   @HttpCode(HttpStatus.OK)
-  @Post(":eventId/generate-qr")
-  async generateQrCode(@Param("eventId") eventId: string) {
-    return await this.qrCodeService.generateQrCode(eventId)
-  }
+  @Get("scan/:code")
+  async generateQrCode(@Param("code") code: string, @Res() res){
+    const event = await this.eventsService.findByCode(code)
+    if(!event) throw new NotFoundException("Event not found")
+    
+    const isWinner = await this.eventsService.getResults(event.id)
 
-  @HttpCode(HttpStatus.OK)
-  @Post(":eventId/qrcode/:uniqueCode")
-  async processScannedQrCode(
-    @Param("eventId") eventId: string,
-    @Param("uniqueCode") uniqueCode: string
-  ) {
-    return await this.qrCodeService.processScannedQrCode(uniqueCode, eventId)
+    const message = isWinner.result ? `Congratulations, you won a ${isWinner.prize}` : `Sorry, you didn't win anything`
+    const frontendUrl = await this.config.get('FRONTEND_URL')
+    return res.redirect(302, `${frontendUrl}/results/${event.id}?message=${encodeURIComponent(message)}`)
   }
-
  
 }

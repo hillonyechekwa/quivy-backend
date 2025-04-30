@@ -2,8 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { CreateEventDto } from './dto/create-event.dto';
 // import { UpdateEventDto } from './dto/update-event.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import * as QRCode from "qrcode"
 import { nanoid } from "nanoid";
 import {Event, EventStatus} from "@prisma/client"
+import { ConfigService } from '@nestjs/config';
+import { FileUploadService } from 'src/file-upload/file-upload.service';
+import { PrizesService } from 'src/prizes/prizes.service';
 
 
 
@@ -13,10 +17,10 @@ import {Event, EventStatus} from "@prisma/client"
 export class EventsService {
     constructor(
       private prisma: PrismaService,
+      private config: ConfigService,
+      private fileUpload: FileUploadService,
+      private prizes: PrizesService
     ) {}
-
-  
-
   // async newEvent(createEventDto: CreateEventDto, userId: string): Promise<Event> {
   //     const uniqueCode = nanoid();
       
@@ -73,8 +77,8 @@ export class EventsService {
   // }
 
 
-    async newEvent (createEventDto: CreateEventDto, userId: string): Promise<Event>{
-      console.log(createEventDto,'createEventDto')
+  async newEvent (createEventDto: CreateEventDto, userId: string): Promise<Event>{
+  console.log(createEventDto,'createEventDto')
       const uniqueCode = nanoid(64)
 
       const newEvent = await this.prisma.event.create({
@@ -84,6 +88,7 @@ export class EventsService {
                   createEventDto.status === "upcoming" ? "UPCOMING" : 
                   "DRAFTED",
           uniqueCode,
+          qrCodeUrl: "", // Provide a default value for qrCodeUrl
           user: {
             connect: {
               id: userId
@@ -124,15 +129,67 @@ export class EventsService {
       }) 
     }
 
-    async getActiveQrCode(eventId: string) {
-       return await this.prisma.event.findUnique({
-          where: {
-            id: eventId
-          },
-          select: {
-            activeQrCode: true
-          }
-      }) 
+    async generateQrCode (eventId: string) {
+      const event = await this.prisma.event.findUnique({
+        where: {
+          id: eventId
+        }
+      })
+
+
+      if(!event) throw new Error("Event not found")
+      
+
+      const baseUrl = this.config.get('BASE_URL')
+      const qrData = `${baseUrl}/events/scan/${event.uniqueCode}`
+
+      const dataUrl = await QRCode.toDataUrl(qrData)
+      const base64Data = dataUrl.replace(/^data:image\/png;base64,/, '')
+      const buffer = Buffer.from(base64Data, 'base64')
+
+      const fileName = `qr-${event.uniqueCode}.png`
+
+      const publicUrl = await this.fileUpload.uploadQrCode(buffer, "codes", fileName)
+
+      await this.prisma.event.update({
+        where: {
+          id: event.id
+        },
+        data: {
+          qrCodeUrl: publicUrl
+        }
+      })
+
+      return publicUrl
     }
 
+
+    async findByCode (code: string){
+      return await this.prisma.event.findUnique({
+        where: {
+          uniqueCode: code
+        }
+      })
+    }
+
+
+    async getResults (eventId: string){
+
+      const isWinner =  Math.random() < 0.5
+
+      if(isWinner){
+        const prize = await this.prizes.pickRandomPrize(eventId)
+        return {
+          result: isWinner,
+          prizeId: prize.id,
+          prize: prize.name
+        }
+      } else {
+        return {
+          result: isWinner
+        }
+      }
+
+
+    }
 }
