@@ -10,7 +10,6 @@ import { AuthEntity } from './entities/auth.entity';
 import { VerificationService } from 'src/verification/verification.service';
 import { MailerService } from 'src/mailer/mailer.service';
 import * as bcrypt from "bcrypt"
-import * as argon2 from "argon2"
 import refreshJwtConfig from 'src/config/refresh.config'
 import jwtConfig from 'src/config/jwt.config';
 import { nanoid } from 'nanoid';
@@ -174,7 +173,7 @@ export class AuthService {
   }
 
 
-  async generateEmailVerification(userId) {
+  async generateEmailVerification(userId: string) {
     const user = await this.userService.findById(userId)
     if (!user) {
       throw new NotFoundException('User not found!')

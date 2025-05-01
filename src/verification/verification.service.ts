@@ -1,5 +1,4 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import * as argon2 from 'argon2'
 import * as bcrypt from 'bcrypt'
 import { generateOTP } from './utils/otp.utils';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -88,5 +87,17 @@ export class VerificationService {
 
   async cleanupExpiredTokens() {}
   
-  
+  async generateWinnerRedeemCode(winnerId: string){
+    const redeemCode = generateOTP(6)
+    
+    const updateWinnerCode = await this.prisma.winner.update({
+      where: {
+        id: winnerId
+      },
+      data: {
+        uniqueCode: redeemCode
+      }
+    })
+   return updateWinnerCode.uniqueCode 
+  }
 }
