@@ -10,5 +10,6 @@ import { PrizeCronService } from './jobs/prize-cron.service';
   imports: [FileUploadModule, PrismaModule, ConfigModule],
   controllers: [PrizesController],
   providers: [PrizesService, PrizeCronService],
+  exports: [PrizesService],
 })
 export class PrizesModule {}

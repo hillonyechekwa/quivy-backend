@@ -1,5 +1,5 @@
 import {ApiProperty} from "@nestjs/swagger"
-import {Event, QrCode, Winner, Prize, EventStatus} from "@prisma/client"
+import {Event, Winner, Prize, EventStatus} from "@prisma/client"
 
 
 export class EventEntity implements Event {
@@ -25,13 +25,22 @@ export class EventEntity implements Event {
   qrCodeValidityDuration: number
 
   @ApiProperty()
-  activeQrCode?: QrCode
+  qrCodeUrl: string
 
   @ApiProperty({default: EventStatus.DRAFTED})
   status: EventStatus
 
   @ApiProperty()
   uniqueCode: string
+
+  @ApiProperty()
+  scans: number
+
+  @ApiProperty()
+  clicks: number
+
+  @ApiProperty()
+  notifications: []
 
   @ApiProperty()
   winners: Winner[]
