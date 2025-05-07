@@ -122,7 +122,7 @@ export class EventsController {
     if(!event) throw new NotFoundException("Event not found")
     const closedMessage = "Sorry this giveaway event is already closed"
     if(event.status === "CLOSED"){
-      return res.redirect(302, `$frontendUrl/results/loss${event.id}?message=${encodeURIComponent(closedMessage)}`)
+      return res.redirect(302, `$frontendUrl/results/loss/${event.id}/?message=${encodeURIComponent(closedMessage)}`)
     }
 
     const isWinner = await this.eventsService.getResults(event.id)
