@@ -73,7 +73,7 @@ export class VerificationService {
       }
     })
 
-    if (validToken && await bcrypt.compare(validToken.token, token)) {
+    if (validToken && await bcrypt.compare(token, validToken.token)) {
       await this.prisma.verification.delete({
         where: {
           id: validToken.id
