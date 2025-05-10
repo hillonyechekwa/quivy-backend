@@ -3,6 +3,7 @@ import { ApiProperty } from "@nestjs/swagger"
 interface userObject {
     userId: string
     email: string
+    accountStatus: string
 }
 
 

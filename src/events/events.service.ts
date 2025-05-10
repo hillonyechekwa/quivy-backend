@@ -4,7 +4,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as QRCode from "qrcode"
 import { nanoid } from "nanoid";
-import {Event, EventStatus} from "@prisma/client"
+import {Event} from "@prisma/client"
 import { ConfigService } from '@nestjs/config';
 import { FileUploadService } from 'src/file-upload/file-upload.service';
 import { PrizesService } from 'src/prizes/prizes.service';

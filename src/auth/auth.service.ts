@@ -78,7 +78,8 @@ export class AuthService {
       return {
         user: {
           userId: user.id,
-          email: user.email
+          email: user.email,
+          accountStatus: user.accountStatus
         },
         backendTokens: {
           accessToken,
@@ -101,7 +102,8 @@ export class AuthService {
     return {
       user: {
         userId: user.id,
-        email: user.email
+        email: user.email,
+        accountStatus: user.accountStatus
       },
       backendTokens: {
         accessToken,
