@@ -106,10 +106,15 @@ export class EventsController {
   
   @HttpCode(HttpStatus.OK)
   @Post('create')
-  async createNewEvent(@CurrentUser() user, @Body() createEvent: CreateEventDto): Promise<Event>{
+  async createNewEvent(@CurrentUser() user, @Body() createEvent: CreateEventDto) {
     console.log('body', createEvent)
     const userId = user.userId
-    return await this.eventsService.newEvent(createEvent, userId)
+    const event = await this.eventsService.newEvent(createEvent, userId)
+    const qrCode = await this.eventsService.generateQrCode(event.id)
+    return{
+      event,
+      qrCode
+    }
   }
 
   @Public()
