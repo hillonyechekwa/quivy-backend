@@ -143,7 +143,7 @@ export class EventsService {
       const baseUrl = this.config.get('BASE_URL')
       const qrData = `${baseUrl}/events/scan/${event.uniqueCode}`
 
-      const dataUrl = await QRCode.toDataUrl(qrData)
+      const dataUrl = await QRCode.toDataURL(qrData)
       const base64Data = dataUrl.replace(/^data:image\/png;base64,/, '')
       const buffer = Buffer.from(base64Data, 'base64')
 
