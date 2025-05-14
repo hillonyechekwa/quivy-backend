@@ -3,6 +3,7 @@ import { AnyFilesInterceptor, FilesInterceptor} from '@nestjs/platform-express';
 import { PrizesService } from './prizes.service';
 import { UploadedFiles } from '@nestjs/common';
 import { FileUploadService } from 'src/file-upload/file-upload.service';
+import { Logger } from '@nestjs/common';
 import { CreatePrizeDto } from './dto/create-prize.dto';
 import { CreatePrizesDto } from './dto/create-prizes.dto';
 import { Express } from 'express';
@@ -12,6 +13,7 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 @Controller('prizes')
 @ApiTags('Prizes')
 export class PrizesController {
+  private readonly logger = new Logger(PrizesController.name);
   constructor(
     private readonly prizesService: PrizesService,
     private readonly fileUploadService: FileUploadService
@@ -99,7 +101,8 @@ export class PrizesController {
       //   prizeData.prizes.push({ name, description, quantity, imageUrl: uploadedImageUrl })
       // }
 
-      console.log("recieved prizes", prizeData.prizes)
+      // console.log("recieved prizes", prizeData.prizes)
+      this.logger.log(prizeData, "prizeData")
       return await this.prizesService.createManyPrizes(prizeData, eventId);
     }catch (error) {
       console.error('Error creating prizes:', error);

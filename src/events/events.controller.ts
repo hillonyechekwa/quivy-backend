@@ -7,12 +7,14 @@ import { EventEntity } from './entities/event.entity';
 import { EventSseGateway } from './sse/event-sse.gateway';
 import { Event } from '@prisma/client';
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Public } from 'src/decorators/public.decorator';
 
 @Controller('events')
 @ApiTags('Events')
 export class EventsController {
+  private readonly logger = new Logger(EventsController.name);
   constructor(
     private readonly eventsService: EventsService,
     private readonly sseGateway: EventSseGateway,
@@ -110,7 +112,9 @@ export class EventsController {
     console.log('body', createEvent)
     const userId = user.userId
     const event = await this.eventsService.newEvent(createEvent, userId)
+    this.logger.log(event, "event")
     const qrCode = await this.eventsService.generateQrCode(event.id)
+    this.logger.log(qrCode, "qrCode")
     return{
       event,
       qrCode

@@ -25,7 +25,7 @@ model User {
   Verification       Verification[]
   events             Event[]
   profile            Profile?
-  notifcations       Notification[]
+  notifications       Notification[]
   passwordResetToken resetToken?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt()
