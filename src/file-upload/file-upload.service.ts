@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
+import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
 import { nanoid } from "nanoid";
@@ -6,7 +7,7 @@ import { nanoid } from "nanoid";
 @Injectable()
 export class FileUploadService {
     private supabase: SupabaseClient;
-
+    private readonly logger = new Logger(FileUploadService.name);
     constructor(
         private config: ConfigService
     ) {
@@ -59,7 +60,7 @@ export class FileUploadService {
 
         const fileExt = file.originalname.split('.').pop();
         const fileName = `${nanoid()}.${fileExt}`;
-        const fileSize = file.size;
+        // const fileSize = file.size;
         const filePath = `${Date.now()}_${fileName}`;
         
         
@@ -98,7 +99,13 @@ export class FileUploadService {
     }
 
     async uploadQrCode(buffer: Buffer, folder: string, fileName: string) {
-        const path = `${folder}/${fileName}`
+
+        await this.checkSupabaseBucket(folder).catch(console.error);
+
+        const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-_]/g, '');
+        const path = `${folder}/${sanitizedFileName}`;
+      
+        this.logger.debug(`Uploading QR code to path: ${path}`);
 
         const {error} = await this.supabase.storage.from(folder)
         .upload(path, buffer, {
@@ -106,7 +113,10 @@ export class FileUploadService {
             upsert: true
         })
 
-        if(error) throw error
+        if(error) {
+            console.error('supabase storage error', error)
+            throw new InternalServerErrorException(`Filed to upload qrcode: ${error.message}` )
+        }
 
         const {data: publicUrlData} = await this.supabase.storage
         .from(folder)

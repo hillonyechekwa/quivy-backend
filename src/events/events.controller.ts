@@ -115,10 +115,7 @@ export class EventsController {
     this.logger.log(event, "event")
     const qrCode = await this.eventsService.generateQrCode(event.id)
     this.logger.log(qrCode, "qrCode")
-    return{
-      event,
-      qrCode
-    }
+    return event
   }
 
   @Public()

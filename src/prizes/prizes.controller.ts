@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, HttpCode, HttpStatus, UseInterceptors, InternalServerErrorException, BadRequestException } from '@nestjs/common';
-import { AnyFilesInterceptor, FilesInterceptor} from '@nestjs/platform-express';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { PrizesService } from './prizes.service';
 import { UploadedFiles } from '@nestjs/common';
 import { FileUploadService } from 'src/file-upload/file-upload.service';
@@ -8,7 +8,8 @@ import { CreatePrizeDto } from './dto/create-prize.dto';
 import { CreatePrizesDto } from './dto/create-prizes.dto';
 import { Express } from 'express';
 // import { UpdatePrizeDto } from './dto/update-prize.dto';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+// import {ApiOkResponse} from '@nestjs/swagger';
 
 @Controller('prizes')
 @ApiTags('Prizes')

@@ -4,7 +4,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as QRCode from "qrcode"
 import { nanoid } from "nanoid";
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import {Event} from "@prisma/client"
 import { ConfigService } from '@nestjs/config';
 import { FileUploadService } from 'src/file-upload/file-upload.service';
@@ -140,7 +140,9 @@ export class EventsService {
 
       this.logger.log(event, "generateQrEvent")
 
-      if(!event) throw new Error("Event not found")
+      if(!event) {
+        throw new NotFoundException("Event not found")
+      }
       
 
       const baseUrl = this.config.get('BASE_URL')
@@ -157,7 +159,9 @@ export class EventsService {
       const publicUrl = await this.fileUpload.uploadQrCode(buffer, "codes", fileName)
 
       this.logger.log(publicUrl, "publicUrl")
-      if(!publicUrl) throw new Error("Failed to upload QR code")
+      if(!publicUrl) {
+        throw new InternalServerErrorException("Failed to upload QR code")
+      }
 
       await this.prisma.event.update({
         where: {

@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Prize } from '@prisma/client';
 import { FileUploadService } from 'src/file-upload/file-upload.service';
-import { Prisma } from '@prisma/client';
+// import { Prisma } from '@prisma/client';
 import { CreatePrizesDto } from './dto/create-prizes.dto';
 
 
@@ -30,15 +30,15 @@ export class PrizesService {
 
           // if (!createPrizeDto.image) return undefined;
   
-          const newPrize = await this.prisma.prize.create({
-              data: {
-                  ...createPrizeDto,
-                  imageUrl: createPrizeDto.imageUrl,
-                  eventId: eventId,
-              }
-          })
-  
-          return newPrize
+      const newPrize = await this.prisma.prize.create({
+          data: {
+              ...createPrizeDto,
+              imageUrl: createPrizeDto.imageUrl,
+              eventId: eventId,
+          }
+      })
+
+      return newPrize
   }
   
   async createManyPrizes(createPrizesDto: CreatePrizesDto, eventId): Promise<Prize[]>{
@@ -53,43 +53,43 @@ export class PrizesService {
     return prizes
   }
   
-    async pickRandomPrize(eventId: string): Promise<Prize> {
-        const prizes = await this.prisma.prize.findMany({
-            where: {
-                eventId: eventId,
-                status: "AVAILABLE",
-                AND: [
-                    { quantity: { gt: 0 } }
-                ]
-            }
-        })
-
-        if(prizes.length === 0) {
-            throw new Error("No active prizes found")
-        }
-
-      const randomIndex = Math.floor(Math.random() * prizes.length)
-      const randomPrize = prizes[randomIndex]
-      //update prize quantity
-      await this.prisma.prize.update({
+  async pickRandomPrize(eventId: string): Promise<Prize> {
+    const prizes = await this.prisma.prize.findMany({
         where: {
-          id: randomPrize.id
-        },
-        data: {
-          quantity: {
-            decrement: 1
-          }
+            eventId: eventId,
+            status: "AVAILABLE",
+            AND: [
+                { quantity: { gt: 0 } }
+            ]
         }
-      })
-      //check if prize quantity is now 0
-      return prizes[randomIndex]
+    })
+
+    if(prizes.length === 0) {
+        throw new Error("No active prizes found")
     }
-  
-    async uploadPrizeImage(file: Express.Multer.File): Promise<string | undefined> {
-        if (!file) return undefined;
-        const uploadResult = await this.fileUpload.uploadFileToSupabase(file, "prizes");
-        return uploadResult?.url;
+
+    const randomIndex = Math.floor(Math.random() * prizes.length)
+    const randomPrize = prizes[randomIndex]
+    //update prize quantity
+    await this.prisma.prize.update({
+      where: {
+        id: randomPrize.id
+      },
+      data: {
+        quantity: {
+          decrement: 1
+        }
       }
+    })
+    //check if prize quantity is now 0
+    return prizes[randomIndex]
+  }
+  
+  async uploadPrizeImage(file: Express.Multer.File): Promise<string | undefined> {
+      if (!file) return undefined;
+      const uploadResult = await this.fileUpload.uploadFileToSupabase(file, "prizes");
+      return uploadResult?.url;
+    }
 
   async makePrizeUnavailable(prizeId: string): Promise<Prize> {
     const prize = await this.prisma.prize.findUnique({
