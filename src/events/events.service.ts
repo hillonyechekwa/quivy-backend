@@ -4,6 +4,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as QRCode from "qrcode"
 import { nanoid } from "nanoid";
+import { Logger } from '@nestjs/common';
 import {Event} from "@prisma/client"
 import { ConfigService } from '@nestjs/config';
 import { FileUploadService } from 'src/file-upload/file-upload.service';
@@ -15,6 +16,7 @@ import { PrizesService } from 'src/prizes/prizes.service';
 
 @Injectable()
 export class EventsService {
+  private readonly logger = new Logger(EventsService.name);
     constructor(
       private prisma: PrismaService,
       private config: ConfigService,
@@ -136,20 +138,26 @@ export class EventsService {
         }
       })
 
+      this.logger.log(event, "generateQrEvent")
 
       if(!event) throw new Error("Event not found")
       
 
       const baseUrl = this.config.get('BASE_URL')
+      
       const qrData = `${baseUrl}/events/scan/${event.uniqueCode}`
 
       const dataUrl = await QRCode.toDataURL(qrData)
+      this.logger.log(dataUrl, "dataUrl")
       const base64Data = dataUrl.replace(/^data:image\/png;base64,/, '')
       const buffer = Buffer.from(base64Data, 'base64')
 
       const fileName = `qr-${event.uniqueCode}.png`
 
       const publicUrl = await this.fileUpload.uploadQrCode(buffer, "codes", fileName)
+
+      this.logger.log(publicUrl, "publicUrl")
+      if(!publicUrl) throw new Error("Failed to upload QR code")
 
       await this.prisma.event.update({
         where: {
