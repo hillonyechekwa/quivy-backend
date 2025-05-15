@@ -106,6 +106,10 @@ export class EventsService {
         return await this.prisma.event.findMany({
           where: {
             userId: userId
+          },
+          include: {
+            winners: true,
+            prizes: true
           }
         })
     }
