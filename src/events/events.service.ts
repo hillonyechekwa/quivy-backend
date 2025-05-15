@@ -116,8 +116,12 @@ export class EventsService {
           where: {
             id: eventId,
             userId: userId
-      }
-    })
+          },
+          include: {
+            winners: true,
+            prizes: true
+          }
+        })
     }
 
     async getEventStatus(eventId: string) {

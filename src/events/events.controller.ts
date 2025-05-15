@@ -42,68 +42,6 @@ export class EventsController {
   async getEventStatus(@Param("id") id: string) {
     return this.eventsService.getEventStatus(id)
   }
-
-
-  // @HttpCode(HttpStatus.OK)
-  // @ApiOkResponse({ type: EventEntity })
-  // @Post('create')
-  // @UseInterceptors(FileFieldsInterceptor([
-  //   { name: 'prizeImages', maxCount: 10 } // Single field for all prize images
-  // ]))
-  // async createEvent(
-  //   @CurrentUser() user,
-  //   @Body() createEvent: any,
-  //   @UploadedFiles(
-  //     new ParseFilePipe({
-  //       fileIsRequired: false
-  //     })
-  //   ) files: { prizeImages?: Express.Multer.File[] }
-  // ): Promise<Event> {
-  //   const userId = await user.userId;
-    
-  //   if (!createEvent.name && !createEvent.title) {
-  //     throw new BadRequestException('Event name is required');
-  //   }
-    
-  //   // Parse the event data
-  //   const eventData: CreateEventDto = {
-  //     name: createEvent.name || createEvent.title, // Use name if provided, fall back to title
-  //     description: createEvent.description,
-  //     date: new Date(createEvent.date),
-  //     eventStartTime: new Date(createEvent.eventStartTime),
-  //     eventEndTime: new Date(createEvent.eventEndTime),
-  //     qrCodeValidityDuration: parseInt(createEvent.qrCodeValidityDuration),
-  //     status: createEvent.status,
-  //     prizes: []
-  //   };
-
-  //   // Parse prizes array safely
-  //   if (createEvent.prizes) {
-  //     try {
-  //       // Handle both string and array cases
-  //       const prizesData = typeof createEvent.prizes === 'string' 
-  //         ? JSON.parse(createEvent.prizes)
-  //         : createEvent.prizes;
-
-  //       eventData.prizes = prizesData.map((prize: any, index: number) => ({
-  //         name: prize.name,
-  //         description: prize.description,
-  //         quantity: parseInt(prize.quantity.toString()),
-  //         status: "AVAILABLE",
-  //         image: files?.prizeImages?.[index],
-  //         eventId: "" // This will be set by the service
-  //       }));
-  //     } catch (error) {
-  //       throw new BadRequestException('Invalid prizes data format');
-  //     }
-  //   }
-
-  //   console.log('createEventData', eventData)
-    
-  //   const newEvent = await this.eventsService.newEvent(eventData, userId);
-  //   console.log('newEvent', newEvent)
-  //   return newEvent
-  // }
   
   
   @HttpCode(HttpStatus.OK)
@@ -113,8 +51,7 @@ export class EventsController {
     const userId = user.userId
     const event = await this.eventsService.newEvent(createEvent, userId)
     this.logger.log(event, "event")
-    const qrCode = await this.eventsService.generateQrCode(event.id)
-    this.logger.log(qrCode, "qrCode")
+    await this.eventsService.generateQrCode(event.id)
     return event
   }
 
